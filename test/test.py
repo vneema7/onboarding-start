@@ -175,6 +175,7 @@ async def test_pwm_freq(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
     await ClockCycles(dut.clk, 2000)
+    dut._log.info(f"uo_out after setup = {dut.uo_out.value}")
 
     # Use whole bus, not dut.uo_out[0]
     await with_timeout(RisingEdge(dut.uo_out), 1_000_000, "ns")
