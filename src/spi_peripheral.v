@@ -14,69 +14,43 @@ module spi_peripheral (
     output reg  [7:0] pwm_duty_cycle
 );
 
-    reg sclk_ff1, sclk_ff2;
-    reg ncs_ff1,  ncs_ff2;
-    reg mosi_ff1, mosi_ff2;
-
     reg [15:0] shift_reg;
     reg [4:0]  bit_count;
+    reg [15:0] word_rx;
 
-    wire sclk_rising;
-    wire ncs_falling;
-    wire [15:0] next_shift;
-
-    assign sclk_rising = (~sclk_ff2) & sclk_ff1;
-    assign ncs_falling = ncs_ff2 & (~ncs_ff1);
-    assign next_shift  = {shift_reg[14:0], mosi_ff2};
-
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge sclk or posedge ncs or negedge rst_n) begin
         if (!rst_n) begin
-            sclk_ff1 <= 1'b0;
-            sclk_ff2 <= 1'b0;
-            ncs_ff1  <= 1'b1;
-            ncs_ff2  <= 1'b1;
-            mosi_ff1 <= 1'b0;
-            mosi_ff2 <= 1'b0;
-
-            shift_reg <= 16'h0000;
-            bit_count <= 5'd0;
+            shift_reg       <= 16'h0000;
+            bit_count       <= 5'd0;
+            word_rx         <= 16'h0000;
 
             en_reg_out_7_0  <= 8'h00;
             en_reg_out_15_8 <= 8'h00;
             en_reg_pwm_7_0  <= 8'h00;
             en_reg_pwm_15_8 <= 8'h00;
             pwm_duty_cycle  <= 8'h00;
+        end else if (ncs) begin
+            bit_count <= 5'd0;
         end else begin
-            sclk_ff2 <= sclk_ff1;
-            sclk_ff1 <= sclk;
+            word_rx = {shift_reg[14:0], mosi};
+            shift_reg <= word_rx;
 
-            ncs_ff2 <= ncs_ff1;
-            ncs_ff1 <= ncs;
-
-            mosi_ff2 <= mosi_ff1;
-            mosi_ff1 <= mosi;
-
-            if (ncs_falling) begin
-                shift_reg <= 16'h0000;
-                bit_count <= 5'd0;
-            end else if (!ncs_ff1 && sclk_rising) begin
-                shift_reg <= next_shift;
-
-                if (bit_count == 5'd15) begin
-                    if (next_shift[15]) begin
-                        case (next_shift[14:8])
-                            7'h00: en_reg_out_7_0  <= next_shift[7:0];
-                            7'h01: en_reg_out_15_8 <= next_shift[7:0];
-                            7'h02: en_reg_pwm_7_0  <= next_shift[7:0];
-                            7'h03: en_reg_pwm_15_8 <= next_shift[7:0];
-                            7'h04: pwm_duty_cycle  <= next_shift[7:0];
-                            default: begin end
-                        endcase
-                    end
-                    bit_count <= 5'd0;
-                end else begin
-                    bit_count <= bit_count + 5'd1;
+            if (bit_count == 5'd15) begin
+                if (word_rx[15]) begin
+                    case (word_rx[14:8])
+                        7'h00: en_reg_out_7_0  <= word_rx[7:0];
+                        7'h01: en_reg_out_15_8 <= word_rx[7:0];
+                        7'h02: en_reg_pwm_7_0  <= word_rx[7:0];
+                        7'h03: en_reg_pwm_15_8 <= word_rx[7:0];
+                        7'h04: pwm_duty_cycle  <= word_rx[7:0];
+                        default: begin end
+                    endcase
                 end
+
+                bit_count <= 5'd0;
+                shift_reg <= 16'h0000;
+            end else begin
+                bit_count <= bit_count + 5'd1;
             end
         end
     end
