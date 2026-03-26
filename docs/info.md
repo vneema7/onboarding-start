@@ -9,11 +9,22 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+This project implements an SPI-controlled PWM peripheral for Tiny Tapeout.
 
 ## How to test
 
-Explain how to use your project
+## Features
+- SPI write transactions
+- Register-controlled outputs
+- PWM signal generation
+- 16 output bits across uo_out and uio_out
+
+## Register Map
+- 0x00: en_reg_out_7_0
+- 0x01: en_reg_out_15_8
+- 0x02: en_reg_pwm_7_0
+- 0x03: en_reg_pwm_15_8
+- 0x04: pwm_duty_cycle
 
 ## External hardware
 
