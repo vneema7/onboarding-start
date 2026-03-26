@@ -15,10 +15,7 @@ module spi_peripheral (
 );
 
     reg [15:0] shift_reg;
-    reg [4:0]  bit_count;
-
-    wire [15:0] next_shift;
-    assign next_shift = {shift_reg[14:0], mosi};
+    reg [4:0] bit_count;
 
     always @(posedge sclk or posedge ncs or negedge rst_n) begin
         if (!rst_n) begin
@@ -30,26 +27,28 @@ module spi_peripheral (
             en_reg_pwm_15_8 <= 8'h00;
             pwm_duty_cycle  <= 8'h00;
         end else if (ncs) begin
-            shift_reg <= 16'h0000;
-            bit_count <= 5'd0;
-        end else begin
-            shift_reg <= next_shift;
-
-            if (bit_count == 5'd15) begin
-                if (next_shift[15]) begin
-                    case (next_shift[14:8])
-                        7'h00: en_reg_out_7_0  <= next_shift[7:0];
-                        7'h01: en_reg_out_15_8 <= next_shift[7:0];
-                        7'h02: en_reg_pwm_7_0  <= next_shift[7:0];
-                        7'h03: en_reg_pwm_15_8 <= next_shift[7:0];
-                        7'h04: pwm_duty_cycle  <= next_shift[7:0];
+            // Transaction just ended: decode exactly one full 16-bit word
+            if (bit_count == 5'd16) begin
+                if (shift_reg[15]) begin
+                    case (shift_reg[14:8])
+                        7'h00: en_reg_out_7_0  <= shift_reg[7:0];
+                        7'h01: en_reg_out_15_8 <= shift_reg[7:0];
+                        7'h02: en_reg_pwm_7_0  <= shift_reg[7:0];
+                        7'h03: en_reg_pwm_15_8 <= shift_reg[7:0];
+                        7'h04: pwm_duty_cycle  <= shift_reg[7:0];
                         default: begin end
                     endcase
                 end
-                bit_count <= 5'd0;
-            end else begin
-                bit_count <= bit_count + 5'd1;
             end
+
+            shift_reg <= 16'h0000;
+            bit_count <= 5'd0;
+        end else begin
+            // Shift one bit on each rising SCLK edge while CS is low
+            shift_reg <= {shift_reg[14:0], mosi};
+
+            if (bit_count < 5'd16)
+                bit_count <= bit_count + 5'd1;
         end
     end
 
