@@ -163,10 +163,10 @@ async def test_pwm_freq(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
     # Measure period using two rising edges
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.uo_out)
     t1 = cocotb.utils.get_sim_time(units="ns")
 
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.uo_out)
     t2 = cocotb.utils.get_sim_time(units="ns")
 
     period_ns = t2 - t1
@@ -195,13 +195,13 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x04, duty_reg_value)
 
     # Measure one PWM cycle
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.uo_out)
     t_rise1 = cocotb.utils.get_sim_time(units="ns")
 
-    await FallingEdge(dut.uo_out[0])
+    await FallingEdge(dut.uo_out)
     t_fall = cocotb.utils.get_sim_time(units="ns")
 
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.uo_out)
     t_rise2 = cocotb.utils.get_sim_time(units="ns")
 
     high_time_ns = t_fall - t_rise1
