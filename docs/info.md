@@ -10,6 +10,7 @@ You can also include images in this folder and reference them in the markdown. E
 ## How it works
 
 This project implements an SPI-controlled PWM peripheral for Tiny Tapeout.
+Does it work
 
 ## How to test
 
