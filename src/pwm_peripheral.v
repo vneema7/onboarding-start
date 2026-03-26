@@ -22,7 +22,7 @@ module pwm_peripheral (
 );
 
     // 10 MHz / (13 * 256) = 3004.8 Hz
-    localparam integer CLK_DIV_TRIG = 12;
+    localparam [3:0] CLK_DIV_TRIG = 4'd12;
 
     reg [3:0] clk_counter;
     reg [7:0] pwm_counter;
