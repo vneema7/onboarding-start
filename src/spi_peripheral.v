@@ -23,9 +23,11 @@ module spi_peripheral (
 
     wire sclk_rising;
     wire ncs_falling;
+    wire [15:0] next_shift;
 
     assign sclk_rising = (~sclk_ff2) & sclk_ff1;
     assign ncs_falling = ncs_ff2 & (~ncs_ff1);
+    assign next_shift  = {shift_reg[14:0], mosi_ff2};
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -58,16 +60,16 @@ module spi_peripheral (
                 shift_reg <= 16'h0000;
                 bit_count <= 5'd0;
             end else if (!ncs_ff1 && sclk_rising) begin
-                shift_reg <= {shift_reg[14:0], mosi_ff2};
+                shift_reg <= next_shift;
 
                 if (bit_count == 5'd15) begin
-                    if (shift_reg[14] == 1'b1) begin
-                        case (shift_reg[13:7])
-                            7'h00: en_reg_out_7_0  <= {shift_reg[6:0], mosi_ff2};
-                            7'h01: en_reg_out_15_8 <= {shift_reg[6:0], mosi_ff2};
-                            7'h02: en_reg_pwm_7_0  <= {shift_reg[6:0], mosi_ff2};
-                            7'h03: en_reg_pwm_15_8 <= {shift_reg[6:0], mosi_ff2};
-                            7'h04: pwm_duty_cycle  <= {shift_reg[6:0], mosi_ff2};
+                    if (next_shift[15]) begin
+                        case (next_shift[14:8])
+                            7'h00: en_reg_out_7_0  <= next_shift[7:0];
+                            7'h01: en_reg_out_15_8 <= next_shift[7:0];
+                            7'h02: en_reg_pwm_7_0  <= next_shift[7:0];
+                            7'h03: en_reg_pwm_15_8 <= next_shift[7:0];
+                            7'h04: pwm_duty_cycle  <= next_shift[7:0];
                             default: begin end
                         endcase
                     end
